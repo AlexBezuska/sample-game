@@ -5,14 +5,13 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "test": "node index.test.js"
+    "build": "browserify -o index.js game.js"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/ericlathrop/sample-game.git"
   },
-  "keywords": [
-  ],
+  "keywords": [],
   "author": "Eric Lathrop <eric@ericlathrop.com> (http://ericlathrop.com/)",
   "license": "MIT",
   "bugs": {
@@ -20,5 +19,10 @@
   },
   "homepage": "https://github.com/ericlathrop/sample-game",
   "devDependencies": {
+    "browserify": "^7.0.0"
+  },
+  "dependencies": {
+    "entity-component-system": "0.0.0",
+    "time-accumulator": "0.0.0"
   }
 }
