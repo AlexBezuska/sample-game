@@ -45,31 +45,31 @@ function bounceInHome(entity, elapsed) {
 }
 
 var game = new ECS();
-var id = box();
+var id = box("white");
 game.addSystem("simulation", movement);
 game.addSystem("simulation", bounceInHome);
+game.addSystem("render", draw);
 
-function box() {
+function box(color) {
 	var id = game.addEntity();
 	game.addComponent(id, "position", position(0, 0));
 	game.addComponent(id, "velocity", velocity(0.5, 0.5));
 	game.addComponent(id, "size", size(100, 100));
 	game.addComponent(id, "home", home(0, 0, canvas.width, canvas.height));
+	game.addComponent(id, "strokeStyle", color);
 	return id;
 }
 
-var run = timeAccumulator(5);
-function draw(context) {
-	var ids = Object.keys(game.entities);
-	ids.forEach(function(id) {
-		var entity = game.getEntity(id);
-		if (!entity.position || !entity.size) {
-			return;
-		}
-		context.strokeStyle = "white";
-		context.strokeRect(entity.position.x, entity.position.y, entity.size.width, entity.size.height);
-	});
+function draw(entity, context) {
+	if (!entity.position || !entity.size) {
+		return;
+	}
+	if (entity.strokeStyle) {
+		context.strokeStyle = entity.strokeStyle;
+	}
+	context.strokeRect(entity.position.x, entity.position.y, entity.size.width, entity.size.height);
 }
+
 
 window.addEventListener("keydown", function(e) {
 	console.log(e.key);
@@ -86,10 +86,14 @@ window.addEventListener("keydown", function(e) {
 		entity.velocity.y *= 2;
 	}
 	if (e.key === "h") {
-		box();
+		box("green");
+	}
+	if (e.key === "r") {
+		console.log(Object.keys(game.entities).length, "entities");
 	}
 });
 
+var run = timeAccumulator(5);
 var timeDelta = require("./lib/absolute-to-relative")();
 function render(time) {
 	var elapsed = timeDelta(time);
@@ -98,7 +102,7 @@ function render(time) {
 	run(elapsed, function(elapsed) {
 		game.run("simulation", elapsed);
 	});
-	draw(context);
+	game.run("render", context);
 	window.requestAnimationFrame(render);
 }
 window.requestAnimationFrame(render);
