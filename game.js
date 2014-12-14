@@ -98,10 +98,10 @@ var timeDelta = require("./lib/absolute-to-relative")();
 function render(time) {
 	var elapsed = timeDelta(time);
 
-	context.clearRect(0, 0, canvas.width, canvas.height);
 	run(elapsed, function(elapsed) {
 		game.run("simulation", elapsed);
 	});
+	context.clearRect(0, 0, canvas.width, canvas.height);
 	game.run("render", context);
 	window.requestAnimationFrame(render);
 }
