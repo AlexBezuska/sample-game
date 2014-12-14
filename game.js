@@ -86,7 +86,7 @@ function bounceInHome(entity, elapsed) {
 }
 
 function controlPlayers(entity, elapsed) {
-	if (!entity.twoDimensionalMovement) {
+	if (!entity.twoDimensionalMovement || !entity.keyboard) {
 		return;
 	}
 	entity.twoDimensionalMovement.up = keyboard.isPressed("w");
@@ -118,23 +118,46 @@ function applyFriction(entity, elapsed) {
 	entity.velocity.y *= entity.friction.amount;
 }
 
+function target(target) {
+	return { target: target };
+}
+
+function chaseTarget(entity, elapsed) {
+	if (!entity.twoDimensionalMovement || !entity.target) {
+		return;
+	}
+
+	var target = this.getEntity(entity.target.target);
+
+	entity.twoDimensionalMovement.up = target.position.y < entity.position.y;
+	entity.twoDimensionalMovement.down = target.position.y > entity.position.y;
+	entity.twoDimensionalMovement.left = target.position.x < entity.position.x;
+	entity.twoDimensionalMovement.right = target.position.x > entity.position.x;
+}
+
 var game = new ECS();
-var id = box("white");
-game.addComponent(id, "twoDimensionalMovement", twoDimensionalMovement());
+
+var player = box("white", 0, 0);
+game.addComponent(player, "keyboard", true);
+
+var enemy = box("red", 500, 500);
+game.addComponent(enemy, "target", target(player));
 
 game.addSystem("simulation", controlPlayers);
+game.addSystem("simulation", chaseTarget);
 game.addSystem("simulation", moveInTwoDimensions);
 game.addSystem("simulation", movement);
 game.addSystem("simulation", applyFriction);
 game.addSystem("simulation", bounceInHome);
 game.addSystem("render", draw);
 
-function box(color) {
+function box(color, x, y) {
 	var id = game.addEntity();
-	game.addComponent(id, "position", position(0, 0));
+	game.addComponent(id, "position", position(x, y));
 	game.addComponent(id, "velocity", velocity(0, 0));
 	game.addComponent(id, "friction", friction(0.95));
 	game.addComponent(id, "size", size(100, 100));
+	game.addComponent(id, "twoDimensionalMovement", twoDimensionalMovement());
 	game.addComponent(id, "home", home(0, 0, canvas.width, canvas.height));
 	game.addComponent(id, "strokeStyle", color);
 	return id;
