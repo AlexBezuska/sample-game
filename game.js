@@ -19,8 +19,43 @@ function size(width, height) {
 function home(x, y, width, height) {
 	return { x: x, y: y, width: width, height: height };
 }
-function playerController(velocity, maxVelocity) {
-	return { velocity: velocity, maxVelocity: maxVelocity };
+function friction(amount) {
+	return { amount: amount }
+}
+
+function twoDimensionalMovement() {
+	return {
+		up: false,
+		down: false,
+		left: false,
+		right: false,
+		upAccel: -0.1,
+		downAccel: 0.1,
+		leftAccel: -0.1,
+		rightAccel: 0.1,
+		upMax: -1,
+		downMax: 1,
+		leftMax: -1,
+		rightMax: 1
+	};
+}
+
+function moveInTwoDimensions(entity, elapsed) {
+	if (!entity.velocity || !entity.twoDimensionalMovement) {
+		return;
+	}
+	if (entity.twoDimensionalMovement.up && entity.velocity.y > entity.twoDimensionalMovement.upMax) {
+		entity.velocity.y += entity.twoDimensionalMovement.upAccel;
+	}
+	if (entity.twoDimensionalMovement.down && entity.velocity.y < entity.twoDimensionalMovement.downMax) {
+		entity.velocity.y += entity.twoDimensionalMovement.downAccel;
+	}
+	if (entity.twoDimensionalMovement.left && entity.velocity.x > entity.twoDimensionalMovement.leftMax) {
+		entity.velocity.x += entity.twoDimensionalMovement.leftAccel;
+	}
+	if (entity.twoDimensionalMovement.right && entity.velocity.x < entity.twoDimensionalMovement.rightMax) {
+		entity.velocity.x += entity.twoDimensionalMovement.rightAccel;
+	}
 }
 
 function movement(entity, elapsed) {
@@ -51,21 +86,14 @@ function bounceInHome(entity, elapsed) {
 }
 
 function controlPlayers(entity, elapsed) {
-	if (!entity.velocity || !entity.playerController) {
+	if (!entity.twoDimensionalMovement) {
 		return;
 	}
-	if (keyboard.isPressed("w") && entity.velocity.y > -entity.playerController.maxVelocity) {
-		entity.velocity.y -= entity.playerController.velocity;
-	}
-	if (keyboard.isPressed("s") && entity.velocity.y < entity.playerController.maxVelocity) {
-		entity.velocity.y += entity.playerController.velocity;
-	}
-	if (keyboard.isPressed("a") && entity.velocity.x > -entity.playerController.maxVelocity) {
-		entity.velocity.x -= entity.playerController.velocity;
-	}
-	if (keyboard.isPressed("d") && entity.velocity.x < entity.playerController.maxVelocity) {
-		entity.velocity.x += entity.playerController.velocity;
-	}
+	entity.twoDimensionalMovement.up = keyboard.isPressed("w");
+	entity.twoDimensionalMovement.down = keyboard.isPressed("s");
+	entity.twoDimensionalMovement.left = keyboard.isPressed("a");
+	entity.twoDimensionalMovement.right = keyboard.isPressed("d");
+
 	if (keyboard.consumePressed("l")) {
 		console.log("l");
 		entity.velocity.x *= 2;
@@ -81,18 +109,31 @@ function controlPlayers(entity, elapsed) {
 	}
 }
 
+function applyFriction(entity, elapsed) {
+	if (!entity.velocity || !entity.friction) {
+		return;
+	}
+
+	entity.velocity.x *= entity.friction.amount;
+	entity.velocity.y *= entity.friction.amount;
+}
+
 var game = new ECS();
 var id = box("white");
-game.addComponent(id, "playerController", playerController(0.1, 1.0));
+game.addComponent(id, "twoDimensionalMovement", twoDimensionalMovement());
+
 game.addSystem("simulation", controlPlayers);
+game.addSystem("simulation", moveInTwoDimensions);
 game.addSystem("simulation", movement);
+game.addSystem("simulation", applyFriction);
 game.addSystem("simulation", bounceInHome);
 game.addSystem("render", draw);
 
 function box(color) {
 	var id = game.addEntity();
 	game.addComponent(id, "position", position(0, 0));
-	game.addComponent(id, "velocity", velocity(0.5, 0.5));
+	game.addComponent(id, "velocity", velocity(0, 0));
+	game.addComponent(id, "friction", friction(0.95));
 	game.addComponent(id, "size", size(100, 100));
 	game.addComponent(id, "home", home(0, 0, canvas.width, canvas.height));
 	game.addComponent(id, "strokeStyle", color);
