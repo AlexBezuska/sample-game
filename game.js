@@ -4,6 +4,9 @@ var timeAccumulator = require("time-accumulator");
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
 
+var Keyboard = require("game-keyboard");
+var keyMap = require("game-keyboard/key_map")["US"];
+var keyboard = new Keyboard(keyMap);
 
 function position(x, y) {
 	return { x: x, y: y };
@@ -15,6 +18,9 @@ function size(width, height) {
 }
 function home(x, y, width, height) {
 	return { x: x, y: y, width: width, height: height };
+}
+function playerController(velocity, maxVelocity) {
+	return { velocity: velocity, maxVelocity: maxVelocity };
 }
 
 function movement(entity, elapsed) {
@@ -44,8 +50,41 @@ function bounceInHome(entity, elapsed) {
 	}
 }
 
+function controlPlayers(entity, elapsed) {
+	if (!entity.velocity || !entity.playerController) {
+		return;
+	}
+	if (keyboard.isPressed("w") && entity.velocity.y > -entity.playerController.maxVelocity) {
+		entity.velocity.y -= entity.playerController.velocity;
+	}
+	if (keyboard.isPressed("s") && entity.velocity.y < entity.playerController.maxVelocity) {
+		entity.velocity.y += entity.playerController.velocity;
+	}
+	if (keyboard.isPressed("a") && entity.velocity.x > -entity.playerController.maxVelocity) {
+		entity.velocity.x -= entity.playerController.velocity;
+	}
+	if (keyboard.isPressed("d") && entity.velocity.x < entity.playerController.maxVelocity) {
+		entity.velocity.x += entity.playerController.velocity;
+	}
+	if (keyboard.consumePressed("l")) {
+		console.log("l");
+		entity.velocity.x *= 2;
+		entity.velocity.y *= 2;
+	}
+	if (keyboard.consumePressed("h")) {
+		console.log("h");
+		box("green");
+	}
+	if (keyboard.consumePressed("r")) {
+		console.log("r");
+		console.log(Object.keys(game.entities).length, "entities");
+	}
+}
+
 var game = new ECS();
 var id = box("white");
+game.addComponent(id, "playerController", playerController(0.1, 1.0));
+game.addSystem("simulation", controlPlayers);
 game.addSystem("simulation", movement);
 game.addSystem("simulation", bounceInHome);
 game.addSystem("render", draw);
@@ -69,29 +108,6 @@ function draw(entity, context) {
 	}
 	context.strokeRect(entity.position.x, entity.position.y, entity.size.width, entity.size.height);
 }
-
-
-window.addEventListener("keydown", function(e) {
-	console.log(e.key);
-
-	if (e.key === "j") {
-		game.removeComponent(id, "velocity");
-	}
-	if (e.key === "k") {
-		game.addComponent(id, "velocity", velocity(0.5, 0.5));
-	}
-	if (e.key === "l") {
-		var entity = game.getEntity(id);
-		entity.velocity.x *= 2;
-		entity.velocity.y *= 2;
-	}
-	if (e.key === "h") {
-		box("green");
-	}
-	if (e.key === "r") {
-		console.log(Object.keys(game.entities).length, "entities");
-	}
-});
 
 var run = timeAccumulator(5);
 var timeDelta = require("./lib/absolute-to-relative")();
