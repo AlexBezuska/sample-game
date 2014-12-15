@@ -17,6 +17,7 @@ var playableArea = require("./lib/components/playable-area");
 var applyVelocity = require("./lib/systems/apply-velocity");
 var applyFriction = require("./lib/systems/apply-friction");
 var constrainToPlayableArea = require("./lib/systems/constrain-to-playable-area");
+var drawRectangles = require("./lib/systems/draw-rectangles");
 
 function twoDimensionalMovement() {
 	return {
@@ -87,7 +88,7 @@ game.addSystem("simulation", moveInTwoDimensions);
 game.addSystem("simulation", applyVelocity);
 game.addSystem("simulation", applyFriction);
 game.addSystem("simulation", constrainToPlayableArea);
-game.addSystem("render", draw);
+game.addSystem("render", drawRectangles);
 
 var player = box("white", 0, 0);
 game.addComponent(player, "keyboard", true);
@@ -110,16 +111,6 @@ function box(color, x, y) {
 	game.addComponent(id, "playableArea", playableArea(0, 0, canvas.width, canvas.height));
 	game.addComponent(id, "strokeStyle", color);
 	return id;
-}
-
-function draw(entity, context) {
-	if (!entity.position || !entity.size) {
-		return;
-	}
-	if (entity.strokeStyle) {
-		context.strokeStyle = entity.strokeStyle;
-	}
-	context.strokeRect(entity.position.x, entity.position.y, entity.size.width, entity.size.height);
 }
 
 var run = timeAccumulator(5);
