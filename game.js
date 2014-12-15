@@ -18,6 +18,7 @@ var applyVelocity = require("./lib/systems/apply-velocity");
 var applyFriction = require("./lib/systems/apply-friction");
 var constrainToPlayableArea = require("./lib/systems/constrain-to-playable-area");
 var drawRectangles = require("./lib/systems/draw-rectangles");
+var boxCollider = require("./lib/systems/box-collider");
 
 function twoDimensionalMovement() {
 	return {
@@ -101,7 +102,17 @@ game.addSystem("simulation", moveInTwoDimensions);
 game.addSystem("simulation", applyVelocity);
 game.addSystem("simulation", applyFriction);
 game.addSystem("simulation", constrainToPlayableArea);
+game.addSystem("simulation", boxCollider);
 game.addSystem("render", drawRectangles);
+game.addSystem("render", {
+	each: function(entity, context) {
+		if (!entity.position || !entity.size || !entity.collisions || entity.collisions.length === 0) {
+			return;
+		}
+		context.fillStyle = "rgba(0, 255, 0, 0.3)";
+		context.fillRect(entity.position.x, entity.position.y, entity.size.width, entity.size.height);
+	}
+});
 
 var player = box("white", 0, 0, 100, 100);
 game.addComponent(player, "keyboard", true);
@@ -123,6 +134,7 @@ function box(color, x, y, width, height) {
 	game.addComponent(id, "twoDimensionalMovement", twoDimensionalMovement());
 	game.addComponent(id, "playableArea", playableArea(0, 0, canvas.width, canvas.height));
 	game.addComponent(id, "strokeStyle", color);
+	game.addComponent(id, "collisions", []);
 	return id;
 }
 
