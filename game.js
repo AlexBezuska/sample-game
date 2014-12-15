@@ -8,20 +8,15 @@ var Keyboard = require("game-keyboard");
 var keyMap = require("game-keyboard/key_map")["US"];
 var keyboard = new Keyboard(keyMap);
 
-function position(x, y) {
-	return { x: x, y: y };
-}
+var position = require("./lib/components/position");
 var velocity = position;
+var size = require("./lib/components/size");
+var friction = require("./lib/components/friction");
+var playableArea = require("./lib/components/playable-area");
 
-function size(width, height) {
-	return { width: width, height: height };
-}
-function home(x, y, width, height) {
-	return { x: x, y: y, width: width, height: height };
-}
-function friction(amount) {
-	return { amount: amount }
-}
+var applyVelocity = require("./lib/systems/apply-velocity");
+var applyFriction = require("./lib/systems/apply-friction");
+var constrainToPlayableArea = require("./lib/systems/constrain-to-playable-area");
 
 function twoDimensionalMovement() {
 	return {
@@ -58,33 +53,6 @@ function moveInTwoDimensions(entity, elapsed) {
 	}
 }
 
-function movement(entity, elapsed) {
-	if (!entity.position || !entity.velocity) {
-		return;
-	}
-	entity.position.x += entity.velocity.x * elapsed;
-	entity.position.y += entity.velocity.y * elapsed;
-}
-
-function bounceInHome(entity, elapsed) {
-	if (!entity.position || !entity.velocity || !entity.home) {
-		return;
-	}
-
-	if (entity.position.x < entity.home.x) {
-		entity.velocity.x = Math.abs(entity.velocity.x);
-	}
-	if (entity.position.y < entity.home.y) {
-		entity.velocity.y = Math.abs(entity.velocity.y);
-	}
-	if (entity.position.x + entity.size.width > entity.home.x + entity.home.width) {
-		entity.velocity.x = -Math.abs(entity.velocity.x);
-	}
-	if (entity.position.y + entity.size.height > entity.home.y + entity.home.height) {
-		entity.velocity.y = -Math.abs(entity.velocity.y);
-	}
-}
-
 function controlPlayers(entity, elapsed) {
 	if (!entity.twoDimensionalMovement || !entity.keyboard) {
 		return;
@@ -93,29 +61,6 @@ function controlPlayers(entity, elapsed) {
 	entity.twoDimensionalMovement.down = keyboard.isPressed("s");
 	entity.twoDimensionalMovement.left = keyboard.isPressed("a");
 	entity.twoDimensionalMovement.right = keyboard.isPressed("d");
-
-	if (keyboard.consumePressed("l")) {
-		console.log("l");
-		entity.velocity.x *= 2;
-		entity.velocity.y *= 2;
-	}
-	if (keyboard.consumePressed("h")) {
-		console.log("h");
-		box("green");
-	}
-	if (keyboard.consumePressed("r")) {
-		console.log("r");
-		console.log(Object.keys(game.entities).length, "entities");
-	}
-}
-
-function applyFriction(entity, elapsed) {
-	if (!entity.velocity || !entity.friction) {
-		return;
-	}
-
-	entity.velocity.x *= entity.friction.amount;
-	entity.velocity.y *= entity.friction.amount;
 }
 
 function target(target) {
@@ -136,29 +81,33 @@ function chaseTarget(entity, elapsed) {
 }
 
 var game = new ECS();
+game.addSystem("simulation", controlPlayers);
+game.addSystem("simulation", chaseTarget);
+game.addSystem("simulation", moveInTwoDimensions);
+game.addSystem("simulation", applyVelocity);
+game.addSystem("simulation", applyFriction);
+game.addSystem("simulation", constrainToPlayableArea);
+game.addSystem("render", draw);
 
 var player = box("white", 0, 0);
 game.addComponent(player, "keyboard", true);
 
 var enemy = box("red", 500, 500);
 game.addComponent(enemy, "target", target(player));
-
-game.addSystem("simulation", controlPlayers);
-game.addSystem("simulation", chaseTarget);
-game.addSystem("simulation", moveInTwoDimensions);
-game.addSystem("simulation", movement);
-game.addSystem("simulation", applyFriction);
-game.addSystem("simulation", bounceInHome);
-game.addSystem("render", draw);
+var e = game.getEntity(enemy);
+e.twoDimensionalMovement.upMax = -0.5;
+e.twoDimensionalMovement.downMax = 0.5;
+e.twoDimensionalMovement.leftMax = -0.5;
+e.twoDimensionalMovement.rightMax = 0.5;
 
 function box(color, x, y) {
 	var id = game.addEntity();
 	game.addComponent(id, "position", position(x, y));
 	game.addComponent(id, "velocity", velocity(0, 0));
-	game.addComponent(id, "friction", friction(0.95));
+	game.addComponent(id, "friction", friction(0.95, 0.95));
 	game.addComponent(id, "size", size(100, 100));
 	game.addComponent(id, "twoDimensionalMovement", twoDimensionalMovement());
-	game.addComponent(id, "home", home(0, 0, canvas.width, canvas.height));
+	game.addComponent(id, "playableArea", playableArea(0, 0, canvas.width, canvas.height));
 	game.addComponent(id, "strokeStyle", color);
 	return id;
 }
