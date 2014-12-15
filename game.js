@@ -36,33 +36,37 @@ function twoDimensionalMovement() {
 	};
 }
 
-function moveInTwoDimensions(entity, elapsed) {
-	if (!entity.velocity || !entity.twoDimensionalMovement) {
-		return;
+var moveInTwoDimensions = {
+	each: function moveInTwoDimensions(entity, elapsed) {
+		if (!entity.velocity || !entity.twoDimensionalMovement) {
+			return;
+		}
+		if (entity.twoDimensionalMovement.up && entity.velocity.y > entity.twoDimensionalMovement.upMax) {
+			entity.velocity.y += entity.twoDimensionalMovement.upAccel;
+		}
+		if (entity.twoDimensionalMovement.down && entity.velocity.y < entity.twoDimensionalMovement.downMax) {
+			entity.velocity.y += entity.twoDimensionalMovement.downAccel;
+		}
+		if (entity.twoDimensionalMovement.left && entity.velocity.x > entity.twoDimensionalMovement.leftMax) {
+			entity.velocity.x += entity.twoDimensionalMovement.leftAccel;
+		}
+		if (entity.twoDimensionalMovement.right && entity.velocity.x < entity.twoDimensionalMovement.rightMax) {
+			entity.velocity.x += entity.twoDimensionalMovement.rightAccel;
+		}
 	}
-	if (entity.twoDimensionalMovement.up && entity.velocity.y > entity.twoDimensionalMovement.upMax) {
-		entity.velocity.y += entity.twoDimensionalMovement.upAccel;
-	}
-	if (entity.twoDimensionalMovement.down && entity.velocity.y < entity.twoDimensionalMovement.downMax) {
-		entity.velocity.y += entity.twoDimensionalMovement.downAccel;
-	}
-	if (entity.twoDimensionalMovement.left && entity.velocity.x > entity.twoDimensionalMovement.leftMax) {
-		entity.velocity.x += entity.twoDimensionalMovement.leftAccel;
-	}
-	if (entity.twoDimensionalMovement.right && entity.velocity.x < entity.twoDimensionalMovement.rightMax) {
-		entity.velocity.x += entity.twoDimensionalMovement.rightAccel;
-	}
-}
+};
 
-function controlPlayers(entity, elapsed) {
-	if (!entity.twoDimensionalMovement || !entity.keyboard) {
-		return;
+var controlPlayers = {
+	each: function(entity, elapsed) {
+		if (!entity.twoDimensionalMovement || !entity.keyboard) {
+			return;
+		}
+		entity.twoDimensionalMovement.up = keyboard.isPressed("w");
+		entity.twoDimensionalMovement.down = keyboard.isPressed("s");
+		entity.twoDimensionalMovement.left = keyboard.isPressed("a");
+		entity.twoDimensionalMovement.right = keyboard.isPressed("d");
 	}
-	entity.twoDimensionalMovement.up = keyboard.isPressed("w");
-	entity.twoDimensionalMovement.down = keyboard.isPressed("s");
-	entity.twoDimensionalMovement.left = keyboard.isPressed("a");
-	entity.twoDimensionalMovement.right = keyboard.isPressed("d");
-}
+};
 
 function target(id) {
 	return { id: id };
@@ -73,20 +77,22 @@ function center(entity) {
 	var y = entity.position.y + Math.floor(entity.size.height / 2);
 	return [x, y];
 }
-function chaseTarget(entity, elapsed) {
-	if (!entity.twoDimensionalMovement || !entity.target) {
-		return;
+var chaseTarget = {
+	each: function (entity, elapsed) {
+		if (!entity.twoDimensionalMovement || !entity.target) {
+			return;
+		}
+
+		var src = center(entity);
+		var target = this.getEntity(entity.target.id);
+		var dst = center(target);
+
+		entity.twoDimensionalMovement.up = dst[1] < src[1];
+		entity.twoDimensionalMovement.down = dst[1] > src[1];
+		entity.twoDimensionalMovement.left = dst[0] < src[0];
+		entity.twoDimensionalMovement.right = dst[0] > src[0];
 	}
-
-	var src = center(entity);
-	var target = this.getEntity(entity.target.id);
-	var dst = center(target);
-
-	entity.twoDimensionalMovement.up = dst[1] < src[1];
-	entity.twoDimensionalMovement.down = dst[1] > src[1];
-	entity.twoDimensionalMovement.left = dst[0] < src[0];
-	entity.twoDimensionalMovement.right = dst[0] > src[0];
-}
+};
 
 var game = new ECS();
 game.addSystem("simulation", controlPlayers);

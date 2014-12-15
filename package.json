@@ -22,7 +22,7 @@
     "browserify": "^7.0.0"
   },
   "dependencies": {
-    "entity-component-system": "0.0.0",
+    "entity-component-system": "0.1.0",
     "game-keyboard": "0.0.0",
     "time-accumulator": "0.0.0"
   }
