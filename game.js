@@ -70,7 +70,9 @@ var controlPlayers = {
 };
 
 function target(id) {
-	return { id: id };
+	return {
+		id: id
+	};
 }
 
 function center(entity) {
@@ -79,7 +81,7 @@ function center(entity) {
 	return [x, y];
 }
 var chaseTarget = {
-	each: function (entity, elapsed) {
+	each: function(entity, elapsed) {
 		if (!entity.twoDimensionalMovement || !entity.target) {
 			return;
 		}
@@ -96,6 +98,7 @@ var chaseTarget = {
 };
 
 var game = new ECS();
+window.game = game;
 game.addSystem("simulation", controlPlayers);
 game.addSystem("simulation", chaseTarget);
 game.addSystem("simulation", moveInTwoDimensions);
@@ -140,6 +143,7 @@ function box(color, x, y, width, height) {
 
 var run = timeAccumulator(5);
 var timeDelta = require("./lib/absolute-to-relative")();
+
 function render(time) {
 	var elapsed = timeDelta(time);
 
